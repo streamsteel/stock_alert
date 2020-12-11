@@ -1,5 +1,7 @@
 # 股票持仓推送
 
+![Stock Wechat Bot](https://github.com/streamsteel/stock_alert/workflows/Stock%20Wechat%20Bot/badge.svg?branch=master)
+
 ## 使用方法
 
 ```text
