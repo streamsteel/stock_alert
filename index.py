@@ -44,7 +44,8 @@ config = {
     'sh600583': {
         'buy_price': '4.468',
         'buy_date': datetime.datetime(2020, 12, 10)
-    }
+    },
+    'sh600000': {}
 }
 
 CONSTANT = {
@@ -67,6 +68,7 @@ def get_data(symbol, start, end):
         return data
     except Exception as e:
         logger.error('Can not get the data, error: {}'.format(e))
+        exit(-1)
 
 
 def parse_data(data, symbol):
@@ -74,23 +76,28 @@ def parse_data(data, symbol):
     his_close_prices = data.close.values
     yestoday_close = his_close_prices[-1]
     before_close = his_close_prices[-2]
-    # 1.昨日收益
+    # 1.昨日涨跌
     yestoday_income = np.round(yestoday_close - before_close, decimals=3)
-    # 2.持有收益
-    hold_income = np.round(
-        yestoday_close - np.float(config[symbol]['buy_price']), decimals=3)
-    # 3.明日跌停涨停告警
-    lower = yestoday_close * np.float(0.9)
-    higher = yestoday_close * np.float(1.1)
+    # 2.明日跌停涨停告警
+    lower = np.round(yestoday_close * np.float(0.9), decimals=3)
+    higher = np.round(yestoday_close * np.float(1.1), decimals=3)
 
-    # 卖出告警: 1.持有收益大于50%；2.止损13%；3.持股达到60天
-    hold_days = (datetime.datetime.today() - config[symbol]['buy_date']).days
+    hold_income = None
+    hold_days = None
+    sell_signal = None
+    if config[symbol].get('buy_price'):
+        # 3.持有收益
+        hold_income = np.round(
+            yestoday_close - np.float(config[symbol]['buy_price']), decimals=3)
 
-    # 卖出信号
-    income_per = hold_income / np.float(config[symbol]['buy_price'])
-    sell_signal = False
-    if income_per < np.float(-.13) or income_per > np.float(0.5):
-        sell_signal = True
+        # 卖出告警: 1.持有收益大于50%；2.止损13%；3.持股达到60天
+        hold_days = (datetime.datetime.today() - config[symbol]['buy_date']).days
+
+        # 4.卖出信号
+        income_per = hold_income / np.float(config[symbol]['buy_price'])
+        sell_signal = False
+        if income_per < np.float(-.13) or income_per > np.float(0.5):
+            sell_signal = True
 
     return {
         'yestoday_close': yestoday_close,
@@ -115,11 +122,16 @@ def push_weixin(url, all_context):
     try:
         for symbol, value in all_context['stock'].items():
             payload['desp'] += '---\n\n'
-            payload['desp'] += '**{}** - 买入价:{}\n\n'.format(symbol, config[symbol]['buy_price'])
+            payload['desp'] += '**{}**'.format(symbol)
+            if config[symbol].get('buy_price'):
+                payload['desp'] += ' - 买入价:{}\n\n'.format(config[symbol]['buy_price'])
+            else:
+                payload['desp'] += '\n\n'
             for quota, qval in value.items():
                 if quota == 'sell_signal' and qval:
                     logger.warn('{} 出现卖出信号！'.format(symbol))
-                payload['desp'] += '{}: {}\n\n'.format(CONSTANT[quota], qval)
+                if qval:
+                    payload['desp'] += '{}: {}\n\n'.format(CONSTANT[quota], qval)
     except Exception as e:
         logger.error('json error - {}'.format(e))
     else:
@@ -132,43 +144,6 @@ def push_weixin(url, all_context):
                 logger.info('微信消息推送成功！')
             else:
                 logger.warn('微信推送失败，请检查接口！{}'.format(req.text))
-
-
-def main_handler(event, handler):
-    # 云函数入口函数
-    logger.info('Timed task starts...')
-    end = datetime.datetime.today()
-    start = end + datetime.timedelta(days=-10)
-
-    all_context = {
-        'hold_all_income_per': np.float(0),
-        'stock': {}
-    }
-
-    for symbol, value in config.items():
-        data = get_data(symbol=symbol, start=start, end=end)
-        if not isinstance(data, DataFrame):
-            logger.error(
-                '{} Daily data is None, please check your code'.format(symbol))
-            # 发送Server
-            pass
-        context = parse_data(data, symbol)
-        logger.info('Stock [{}] info: {}'.format(symbol, context))
-        income_per = context['hold_income'] / \
-            np.float(config[symbol]['buy_price'])
-        all_context['hold_all_income_per'] += np.round(income_per, decimals=4)
-        if not all_context['stock'].get(symbol):
-            all_context['stock'][symbol] = context
-        else:
-            all_context['stock'][symbol].update(context)
-
-        time.sleep(2)
-
-    logger.info('All hold info: {}'.format(all_context))
-    push_weixin(all_context)
-
-    logger.info('Event: {}'.format(event))
-    logger.info('Handler: {}'.format(handler))
 
 
 if __name__ == "__main__":
@@ -189,9 +164,11 @@ if __name__ == "__main__":
             pass
         context = parse_data(data, symbol)
         logger.info('Stock [{}] info: {}'.format(symbol, context))
-        income_per = context['hold_income'] / \
-            np.float(config[symbol]['buy_price'])
-        all_context['hold_all_income_per'] += np.round(income_per, decimals=4)
+
+        # 统计数据汇总
+        if config[symbol].get('buy_price'):
+            income_per = context['hold_income'] / np.float(config[symbol]['buy_price'])
+            all_context['hold_all_income_per'] += np.round(income_per, decimals=4)
         if not all_context['stock'].get(symbol):
             all_context['stock'][symbol] = context
         else:
