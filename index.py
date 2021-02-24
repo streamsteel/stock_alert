@@ -42,10 +42,17 @@ logger.addHandler(console)
 # 下面是需要手动设置的东西
 config = {
     'sh600583': {
-        'buy_price': '4.468',
+        'buy_price': '4.423',
         'buy_date': datetime.datetime(2020, 12, 10)
     },
-    'sh600000': {}
+    'sh600339': {
+        'buy_price': '2.663',
+        'buy_date': datetime.datetime(2021, 2, 19)
+    },
+    'sz002544': {
+        'buy_price': '13.787',
+        'buy_date': datetime.datetime(2021, 2, 22)
+    },
 }
 
 CONSTANT = {
