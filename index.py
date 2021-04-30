@@ -116,8 +116,8 @@ def parse_data(data, symbol):
 def push_weixin(url, all_context):
     # Server酱微信推送
     payload = {
-        'text': '股票收益统计',
-        'desp': '### {} 股票收益统计\n\n'.format(datetime.date.today())
+        'title': '{} 股票收益统计\n\n'.format(datetime.date.today()),
+        'desp': ''
     }
 
     payload['desp'] += '> 总收益: {:.2%}\n\n'.format(
@@ -186,6 +186,6 @@ if __name__ == "__main__":
         exit(-1)
     else:
         try:
-            push_weixin(sys.argv[1], all_context)
+            push_weixin('https://sctapi.ftqq.com/{}.send'.format(sys.argv[1]), all_context)
         except Exception as e:
             logger.error('微信推送失败，原因是: '.format(e))
