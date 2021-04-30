@@ -24,6 +24,6 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
       - name: 'Starting'
         env: 
-          SERVERURL: ${{ secrets.ServerChanUrl }}
+          SENDKEY: ${{ secrets.SendKey }}
         run: |
-          python ./index.py $SERVERURL
+          python ./index.py $SENDKEY
