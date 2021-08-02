@@ -8,7 +8,7 @@ on:
     - cron: '27 1 * * 1-5'
   watch:
     types: started
-    
+
 jobs:
   search_wencai:
     name: Search At Iwencai
@@ -29,4 +29,4 @@ jobs:
           WXHOOK: ${{ secrets.WXHOOK }}
           ISSTR: ${{ secrets.ISSTR }}
         run: |
-          python ./index.py
+          python ./iwencai.py
