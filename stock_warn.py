@@ -117,8 +117,8 @@ def parse_data(data, symbol):
 def push_weixin(url, all_context):
     # Server酱微信推送
     payload = {
-        "msgtype": "text",
-        "text": {
+        "msgtype": "markdown",
+        "markdown": {
             "content": '##{} 股票收益统计\n\n'.format(datetime.date.today())
         }
     }
@@ -127,21 +127,21 @@ def push_weixin(url, all_context):
         'Content-Type': 'application/json'
     }
 
-    payload['text']['content'] += '> 总收益: <font color=\"warning\">{:.2%}<font>\n'.format(
+    payload['markdown']['content'] += '> 总收益: <font color=\"warning\">{:.2%}<font>\n'.format(
         all_context['hold_all_income_per'])
     try:
         for symbol, value in all_context['stock'].items():
-            payload['text']['content'] += '**{}**'.format(symbol)
+            payload['markdown']['content'] += '**{}**'.format(symbol)
             if config[symbol].get('buy_price'):
-                payload['text']['content'] += ' - 买入价:{}\n\n'.format(
+                payload['markdown']['content'] += ' - 买入价:{}\n\n'.format(
                     config[symbol]['buy_price'])
             else:
-                payload['text']['content'] += '\n\n'
+                payload['markdown']['content'] += '\n\n'
             for quota, qval in value.items():
                 if quota == 'sell_signal' and qval:
                     logger.warn('{} 出现卖出信号！'.format(symbol))
                 if qval:
-                    payload['text']['content'] += '{}: {}\n\n'.format(
+                    payload['markdown']['content'] += '{}: {}\n\n'.format(
                         CONSTANT[quota], qval)
     except Exception as e:
         logger.error('Error - {}'.format(e))
