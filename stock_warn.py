@@ -82,8 +82,8 @@ def parse_data(data, symbol):
     # 1.昨日涨跌
     yestoday_income = np.round(yestoday_close - before_close, decimals=3)
     # 2.明日跌停涨停告警
-    lower = np.round(yestoday_close * np.float(0.9), decimals=3)
-    higher = np.round(yestoday_close * np.float(1.1), decimals=3)
+    lower = np.round(yestoday_close * np.float64(0.9), decimals=3)
+    higher = np.round(yestoday_close * np.float64(1.1), decimals=3)
 
     hold_income = None
     hold_days = None
@@ -91,16 +91,16 @@ def parse_data(data, symbol):
     if config[symbol].get('buy_price'):
         # 3.持有收益
         hold_income = np.round(
-            yestoday_close - np.float(config[symbol]['buy_price']), decimals=3)
+            yestoday_close - np.float64(config[symbol]['buy_price']), decimals=3)
 
         # 卖出告警: 1.持有收益大于50%；2.止损13%；3.持股达到60天
         hold_days = (datetime.datetime.today() -
                      config[symbol]['buy_date']).days
 
         # 4.卖出信号
-        income_per = hold_income / np.float(config[symbol]['buy_price'])
+        income_per = hold_income / np.float64(config[symbol]['buy_price'])
         sell_signal = False
-        if income_per < np.float(-.13) or income_per > np.float(0.5):
+        if income_per < np.float64(-.13) or income_per > np.float64(0.5):
             sell_signal = True
 
     return {
@@ -123,6 +123,10 @@ def push_weixin(url, all_context):
         }
     }
 
+    wxheaders = {
+        'Content-Type': 'application/json'
+    }
+
     payload['markdown']['content'] += '> 总收益: <font color=\"warning\">{:.2%}<font>\n'.format(
         all_context['hold_all_income_per'])
     try:
@@ -143,7 +147,7 @@ def push_weixin(url, all_context):
         logger.error('Error - {}'.format(e))
     else:
         try:
-            req = requests.post(url, data=payload)
+            req = requests.post(url, data=payload, headers=wxheaders)
             logger.info(req.text)
         except Exception as e:
             logger.error('Error - {}'.format(e))
@@ -160,7 +164,7 @@ if __name__ == "__main__":
     start = end + datetime.timedelta(days=-10)
 
     all_context = {
-        'hold_all_income_per': np.float(0),
+        'hold_all_income_per': np.float64(0),
         'stock': {}
     }
 
@@ -177,7 +181,7 @@ if __name__ == "__main__":
         # 统计数据汇总
         if config[symbol].get('buy_price'):
             income_per = context['hold_income'] / \
-                np.float(config[symbol]['buy_price'])
+                np.float64(config[symbol]['buy_price'])
             all_context['hold_all_income_per'] += np.round(
                 income_per, decimals=4)
         if not all_context['stock'].get(symbol):

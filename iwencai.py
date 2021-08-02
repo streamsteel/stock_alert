@@ -83,11 +83,15 @@ def push_weixin(url, all_context):
             "content": "##{} 股票涨停分析\n\n'.format(datetime.date.today())"
         }
     }
+    wxheaders = {
+        'Content-Type': 'application/json'
+    }
+
     for context in all_context:
         payload['markdown']['content'] += '{}\n'.format(context)
 
     try:
-        req = requests.post(url, data=payload)
+        req = requests.post(url, data=payload, headers=wxheaders)
         logger.info('企业微信推送成功: {}'.format(req.text))
     except Exception as e:
         logger.error('发生错误', e)
