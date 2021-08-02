@@ -1,13 +1,9 @@
 name: 'Stock Wechat Bot'
 
 on:
-  push:
-    branches: 
-      - master
-  schedule:
+  workflow_dispatch: # 手动触发
+  schedule: # 自动触发
     - cron: '0 1 * * 2-6'
-  watch:
-    types: started
 
 jobs:
   stock_job:
