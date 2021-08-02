@@ -1,15 +1,15 @@
-name: 'Stock Wechat Bot'
+name: 'i问财选择涨停股'
 
 on:
   push:
     branches: 
       - master
   schedule:
-    - cron: '0 1 * * 2-6'
+    - cron: '30 1 * * 1-5'
 
 jobs:
-  stock_job:
-    name: Stock alert job
+  search_wencai:
+    name: Search At Iwencai
     runs-on: ubuntu-18.04
     steps:
       - name: Checkout
@@ -25,5 +25,6 @@ jobs:
       - name: 'Starting'
         env: 
           WXHOOK: ${{ secrets.WXHOOK }}
+          ISSTR: ${{ secrets.ISSTR }}
         run: |
-          python ./stock_warn.py
+          python ./index.py

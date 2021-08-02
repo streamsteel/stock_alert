@@ -94,7 +94,8 @@ def parse_data(data, symbol):
             yestoday_close - np.float(config[symbol]['buy_price']), decimals=3)
 
         # 卖出告警: 1.持有收益大于50%；2.止损13%；3.持股达到60天
-        hold_days = (datetime.datetime.today() - config[symbol]['buy_date']).days
+        hold_days = (datetime.datetime.today() -
+                     config[symbol]['buy_date']).days
 
         # 4.卖出信号
         income_per = hold_income / np.float(config[symbol]['buy_price'])
@@ -116,40 +117,45 @@ def parse_data(data, symbol):
 def push_weixin(url, all_context):
     # Server酱微信推送
     payload = {
-        'title': '{} 股票收益统计\n\n'.format(datetime.date.today()),
-        'desp': ''
+        "msgtype": "markdown",
+        "markdown": {
+            "content": "##{} 股票收益统计\n\n'.format(datetime.date.today())"
+        }
     }
 
-    payload['desp'] += '> 总收益: {:.2%}\n\n'.format(
+    payload['markdown']['content'] += '> 总收益: <font color=\"warning\">{:.2%}<font>\n'.format(
         all_context['hold_all_income_per'])
     try:
         for symbol, value in all_context['stock'].items():
-            payload['desp'] += '---\n\n'
-            payload['desp'] += '**{}**'.format(symbol)
+            payload['markdown']['content'] += '**{}**'.format(symbol)
             if config[symbol].get('buy_price'):
-                payload['desp'] += ' - 买入价:{}\n\n'.format(config[symbol]['buy_price'])
+                payload['markdown']['content'] += ' - 买入价:{}\n\n'.format(
+                    config[symbol]['buy_price'])
             else:
-                payload['desp'] += '\n\n'
+                payload['markdown']['content'] += '\n\n'
             for quota, qval in value.items():
                 if quota == 'sell_signal' and qval:
                     logger.warn('{} 出现卖出信号！'.format(symbol))
                 if qval:
-                    payload['desp'] += '{}: {}\n\n'.format(CONSTANT[quota], qval)
+                    payload['markdown']['content'] += '{}: {}\n\n'.format(
+                        CONSTANT[quota], qval)
     except Exception as e:
-        logger.error('json error - {}'.format(e))
+        logger.error('Error - {}'.format(e))
     else:
         try:
             req = requests.post(url, data=payload)
+            logger.info(req.text)
         except Exception as e:
-            logger.error('json error - {}'.format(e))
-        else:
-            if req.json().get('errmsg') == 'success':
-                logger.info('微信消息推送成功！')
-            else:
-                logger.warn('微信推送失败，请检查接口！{}'.format(req.text))
+            logger.error('Error - {}'.format(e))
 
 
 if __name__ == "__main__":
+    # webhook url
+    wxhook = os.environ.get('WXHOOK')
+    if not wxhook:
+        logger.error('没有提供企业微信webhook，请检查!')
+        exit(0)
+
     end = datetime.datetime.today()
     start = end + datetime.timedelta(days=-10)
 
@@ -170,8 +176,10 @@ if __name__ == "__main__":
 
         # 统计数据汇总
         if config[symbol].get('buy_price'):
-            income_per = context['hold_income'] / np.float(config[symbol]['buy_price'])
-            all_context['hold_all_income_per'] += np.round(income_per, decimals=4)
+            income_per = context['hold_income'] / \
+                np.float(config[symbol]['buy_price'])
+            all_context['hold_all_income_per'] += np.round(
+                income_per, decimals=4)
         if not all_context['stock'].get(symbol):
             all_context['stock'][symbol] = context
         else:
@@ -181,11 +189,7 @@ if __name__ == "__main__":
 
     logger.info('All hold info: {}'.format(all_context))
 
-    if len(sys.argv) < 2:
-        logger.error('没有带Server酱API参数')
-        exit(-1)
-    else:
-        try:
-            push_weixin('https://sctapi.ftqq.com/{}.send'.format(sys.argv[1]), all_context)
-        except Exception as e:
-            logger.error('微信推送失败，原因是: '.format(e))
+    try:
+        push_weixin(wxhook, all_context)
+    except Exception as e:
+        logger.error('微信推送失败，原因是: '.format(e))
