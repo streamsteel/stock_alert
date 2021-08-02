@@ -6,6 +6,8 @@ on:
       - master
   schedule:
     - cron: '0 1 * * 2-6'
+  watch:
+    types: started
 
 jobs:
   stock_job:

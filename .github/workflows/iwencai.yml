@@ -6,7 +6,9 @@ on:
       - master
   schedule:
     - cron: '30 1 * * 1-5'
-
+  watch:
+    types: started
+    
 jobs:
   search_wencai:
     name: Search At Iwencai
