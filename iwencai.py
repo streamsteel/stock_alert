@@ -78,9 +78,9 @@ def fetch_data(istr: str):
 def push_weixin(url, all_context):
     # 企业微信推送
     payload = {
-        "msgtype": "markdown",
-        "markdown": {
-            "content": "##{} 股票涨停分析\n\n'.format(datetime.date.today())"
+        "msgtype": "text",
+        "text": {
+            "content": '##{} 股票涨停分析\n\n'.format(datetime.date.today())
         }
     }
     wxheaders = {
@@ -88,7 +88,7 @@ def push_weixin(url, all_context):
     }
 
     for context in all_context:
-        payload['markdown']['content'] += '{}\n'.format(context)
+        payload['text']['content'] += '{}\n'.format(context)
 
     try:
         req = requests.post(url, data=payload, headers=wxheaders)

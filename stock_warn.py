@@ -119,7 +119,7 @@ def push_weixin(url, all_context):
     payload = {
         "msgtype": "text",
         "text": {
-            "content": "##{} 股票收益统计\n\n'.format(datetime.date.today())"
+            "content": '##{} 股票收益统计\n\n'.format(datetime.date.today())
         }
     }
 
