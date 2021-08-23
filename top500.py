@@ -45,10 +45,11 @@ class Top:
             ops = [col.text for col in tr.findall('td')]
             updateDate = datetime.strptime(ops[7].strip(), '%Y-%m-%d')
             if updateDate >= self.endtime:
-                self.message += "\n<font size=12>{code}\t{name}\t{change}</font>\n".format(
+                self.message += "\n<font size=12>{code}\t{name}\t{manage}\t{change}</font>\n".format(
                     code=ops[1],
                     name=ops[2],
-                    change=title) if ops[-2] in ('新进', '增加') else ''
+                    manage=title,
+                    change=ops[-2]) if ops[-2] in ('新进', '增加') else ''
             else:
                 break
 
@@ -61,5 +62,5 @@ if __name__ == '__main__':
 
     # 企业微信推送
     wx = WxBot(
-        wxhook='https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=04ccfe5a-36ed-4170-925a-bdfaf81c0b0c')
+        wxhook='https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=cf440b68-85d6-4b62-ba3c-a1ec18299b5c')
     wx.push(top.message)
